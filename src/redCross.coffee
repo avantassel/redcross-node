@@ -42,6 +42,7 @@ update = (db, collection, query, update, next) ->
     collection.update query, {'$set':update,'$setOnInsert':{created:new Date()}}, options, next
 
 saveAllShelters = (db, shelters, done) ->
+  console.log "Updating #{shelters.length} shelters #{new Date()}"
   async.eachSeries shelters, ((shelter, next) ->
     query = {'location.coordinates': shelter.location.coordinates}
     update db, 'shelters', query, shelter, next
@@ -50,37 +51,49 @@ saveAllShelters = (db, shelters, done) ->
 deActivateShelters = (db, done) ->
   collection = db.collection 'shelters'
   options = {safe: true}
-  collection.update {}, {'$set':{active:false}}, options, done ->
+  collection.update {}, {'$set':{active:false}}, options, done()
 
 updateShelters = (db, done) ->
+  sheltersCount = 0
   async.waterfall [
     (next) -> deActivateShelters db, next
     (next) -> utils.getShelters next
     (shelters, next) -> translateData shelters, next
-    (shelters, next) -> saveAllShelters db, shelters, next
+    (shelters, next) ->
+      sheltersCount = shelters.length
+      saveAllShelters db, shelters, next
   ], (err) ->
-    done err
+    done err, sheltersCount
 
-updateData = (done) ->
+startUpdateSchedule = (done) ->
+  #startup update
+  setTimeout (->
+    updateShelters db, (err, sheltersCount) ->
+      time = Date.now()
+      log = {err, time, sheltersCount}
+      update db, 'logs', log, log
+    ), 1000
+
   if(!config.cronUpdateSchedule)
     console.log "Shelters not scheduled to update, set config cronUpdateSchedule to cron format"
-    return done
+    done
 
   interval = parser.parseExpression config.cronUpdateSchedule
   console.log "Shelters scheduled to update #{interval.next().toString()}"
+
   schedule.scheduleJob config.cronUpdateSchedule, ->
-    updateShelters db, (err) ->
+    updateShelters db, (err, sheltersCount) ->
       time = Date.now()
-      log = {err, time}
+      log = {err, time, sheltersCount}
       update db, 'logs', log, log, (err, results) ->
         return next err if err
-        console.log "Shelters updated at #{new Date()}"
+        results
   done
 
 run = ->
   async.waterfall [
     (next) -> open next
-    (next) -> updateData next
+    (next) -> startUpdateSchedule next
   ], (err) ->
     console.log "Error #{err}, stopped updating shelters"
 run()

@@ -21,9 +21,12 @@
     "mocha": "^2.3.3"
   },
   "scripts": {
-    "start": "forever node app.js",
     "prepublish": "cake build",
+    "start": "forever node app.js",
     "test": "mocha --timeout 20000 --reporter spec test/*.js"
+  },
+  "engines": {
+    "node": ">=0.10.0"
   },
   "repository": {
     "type": "git",

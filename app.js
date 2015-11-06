@@ -27,7 +27,9 @@
 
   app = express();
 
-  app.set("port", process.env.PORT || 8080);
+  app.set("port", process.env.VCAP_APP_PORT || process.env.PORT || 8080);
+
+  app.set("host", process.env.VCAP_APP_HOST || 'localhost');
 
   for (i = 0, len = middleware.length; i < len; i++) {
     ware = middleware[i];
@@ -39,8 +41,12 @@
     app.get(point, action);
   }
 
-  http.createServer(app).listen(app.get("port"), function() {
-    return console.log("Express server listening on port " + app.get("port"));
+  process.on('uncaughtException', function() {
+    return console.log(err);
+  });
+
+  http.createServer(app).listen(app.get("port"), app.get("host"), function() {
+    return console.log("Express server listening at http://" + app.get("host") + ':' + app.get("port"));
   });
 
 }).call(this);

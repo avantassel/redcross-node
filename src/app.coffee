@@ -26,9 +26,14 @@ middleware = [
 
 app = express()
 
-app.set "port", process.env.PORT or 8080
+app.set "port", (process.env.VCAP_APP_PORT or process.env.PORT or 8080)
+app.set "host", (process.env.VCAP_APP_HOST or 'localhost')
+
 app.use ware for ware in middleware
 app.get point, action for point, action of endpoints
 
-http.createServer(app).listen app.get("port"), ->
-  console.log "Express server listening on port " + app.get("port")
+process.on 'uncaughtException', ->
+    console.log(err)
+
+http.createServer(app).listen app.get("port"), app.get("host"), ->
+  console.log "Express server listening at http://" + app.get("host") + ':' + app.get("port")

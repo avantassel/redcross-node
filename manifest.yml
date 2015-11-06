@@ -1,5 +1,10 @@
 ---
 applications:
 - name:    redcross
+  domain:  mybluemix.net
   host:    redcross
   memory:  512M
+  command: node app.js
+  timeout: 80
+  env:
+    env_type: production

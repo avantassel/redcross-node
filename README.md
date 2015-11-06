@@ -19,7 +19,7 @@ node app
 
 ## Config
 
-Set mongo and update schedule times here
+Set mongo and update schedule times here.  Mongo URI can also be set with the environment variable MONGO_URI
 ```
 cronUpdateSchedule
 ```

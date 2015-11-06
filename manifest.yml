@@ -1,4 +1,5 @@
+---
 applications:
-  name:    redcross
+- name:    redcross
   host:    redcross
   memory:  512M

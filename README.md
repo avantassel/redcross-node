@@ -3,7 +3,7 @@
 [![NPM Version](http://img.shields.io/npm/v/redcross.svg)](https://www.npmjs.org/package/redcross)
 [![Build Status](https://travis-ci.org/avantassel/redcross-node.svg)](https://travis-ci.org/avantassel/redcross-node)
 
-A nodejs module for getting redcross shelters
+An API for RedCross shelters. This module downloads shelters and stores them in a mongo database.
 
 ## Development
 ```
@@ -14,7 +14,14 @@ npm install
 cake build
 
 # run the app
-node app.js
+node app
+```
+
+## Config
+
+Set mongo and update schedule times here
+```
+cronUpdateSchedule
 ```
 
 ## All active shelters

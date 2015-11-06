@@ -9,12 +9,7 @@ utils = require './utils'
 config = require './config.json'
 
 # set up server
-{host, port, dbName} = config.mongo
-server = new mongo.Server host, port, auto_reconnect: true
-db = new mongo.Db dbName, server, journal: true
-
-# open db
-open = (next) -> db.open next
+mongoURI = process.env.MONGO_URI or config.mongo.uri or 'mongodb://'+config.mongo.host+':'+config.mongo.port+'/'+config.mongo.dbName
 
 remapLatLong = (shelter) ->
   latitude = parseFloat shelter.lat
@@ -35,67 +30,65 @@ translateData = (shelters, next) ->
   async.map shelters, remapData, next
 
 # DB update shortcut
-update = (db, collection, query, update, next) ->
-  collection = db.collection collection
-  collection.ensureIndex {location: '2dsphere'}, (err) ->
-    options = {safe: true, upsert: true}
-    collection.update query, {'$set':update,'$setOnInsert':{created:new Date()}}, options, next
+update = (collection, query, update, next) ->
+  mongo.MongoClient.connect mongoURI, (err, db) ->
+    collection = db.collection collection
+    collection.ensureIndex {location: '2dsphere'}, (err) ->
+      options = {safe: true, upsert: true}
+      collection.update query, {'$set':update,'$setOnInsert':{created:new Date()}}, options, next
 
-saveAllShelters = (db, shelters, done) ->
+saveAllShelters = (shelters, done) ->
   console.log "Updating #{shelters.length} shelters #{new Date()}"
   async.eachSeries shelters, ((shelter, next) ->
     query = {'location.coordinates': shelter.location.coordinates}
-    update db, 'shelters', query, shelter, next
+    update 'shelters', query, shelter, next
   ), done
 
-deActivateShelters = (db, done) ->
-  collection = db.collection 'shelters'
-  options = {safe: true}
-  collection.update {}, {'$set':{active:false}}, options, done()
+deActivateShelters = (done) ->
+  mongo.MongoClient.connect mongoURI, (err, db) ->
+    collection = db.collection 'shelters'
+    options = {safe: true}
+    collection.update {}, {'$set':{active:false}}, options, done()
 
-updateShelters = (db, done) ->
+updateShelters = (done) ->
   sheltersCount = 0
   async.waterfall [
-    (next) -> deActivateShelters db, next
+    (next) -> deActivateShelters next
     (next) -> utils.getShelters next
     (shelters, next) -> translateData shelters, next
     (shelters, next) ->
       sheltersCount = shelters.length
-      saveAllShelters db, shelters, next
+      saveAllShelters shelters, next
   ], (err) ->
     done err, sheltersCount
 
-startUpdateSchedule = (done) ->
+startUpdateSchedule = ->
   #startup update
   setTimeout (->
-    updateShelters db, (err, sheltersCount) ->
+    updateShelters (err, sheltersCount) ->
       time = Date.now()
       log = {err, time, sheltersCount}
-      update db, 'logs', log, log
+      update 'logs', log, log
     ), 1000
 
   if(!config.cronUpdateSchedule)
     console.log "Shelters not scheduled to update, set config cronUpdateSchedule to cron format"
-    done
+    return
 
   interval = parser.parseExpression config.cronUpdateSchedule
   console.log "Shelters scheduled to update #{interval.next().toString()}"
 
   schedule.scheduleJob config.cronUpdateSchedule, ->
-    updateShelters db, (err, sheltersCount) ->
+    updateShelters (err, sheltersCount) ->
       time = Date.now()
       log = {err, time, sheltersCount}
-      update db, 'logs', log, log, (err, results) ->
+      update 'logs', log, log, (err, results) ->
         return next err if err
         results
-  done
 
 run = ->
-  async.waterfall [
-    (next) -> open next
-    (next) -> startUpdateSchedule next
-  ], (err) ->
-    console.log "Error #{err}, stopped updating shelters"
+  startUpdateSchedule()
+
 run()
 
 addDistance = (shelters, coords, next) ->
@@ -109,31 +102,33 @@ addDistance = (shelters, coords, next) ->
 
 module.exports =
   allShelters: (req, res) ->
-    shelters = db.collection 'shelters'
-    query = req.query
-    if query.active
-      query.active = if query.active is 'false' then false else true
+    mongo.MongoClient.connect mongoURI, (err, db) ->
+      shelters = db.collection 'shelters'
+      query = req.query
+      if query.active
+        query.active = if query.active is 'false' then false else true
 
-    async.waterfall [
-      (next) -> shelters.find query, next
-      (results, next) -> results.toArray next
-    ], (err, shelters) ->
-      return res.send 'Database error' if err
-      res.send shelters
+      async.waterfall [
+        (next) -> shelters.find query, next
+        (results, next) -> results.toArray next
+      ], (err, shelters) ->
+        return res.send 'Database error' if err
+        res.send shelters
 
   closestShelters: (req, res) ->
-    {city, lat, long} = req.params
-    [lat, long] = [parseFloat(lat), parseFloat(long)]
-    shelters = db.collection 'shelters'
-    coord = {type: "Point", coordinates: [long, lat]}
-    query = {location: {$near: {$geometry: coord}}}
-    if req.active
-      query.active = if query.active is 'false' then false else true
+    mongo.MongoClient.connect mongoURI, (err, db) ->
+      {city, lat, long} = req.params
+      [lat, long] = [parseFloat(lat), parseFloat(long)]
+      shelters = db.collection 'shelters'
+      coord = {type: "Point", coordinates: [long, lat]}
+      query = {location: {$near: {$geometry: coord}}}
+      if req.active
+        query.active = if query.active is 'false' then false else true
 
-    async.waterfall [
-      (next) -> shelters.find query, next
-      (results, next) -> results.toArray next
-      (shelters, next) -> addDistance shelters, {lat, long}, next
-    ], (err, shelters) ->
-      return res.send {error: "Database error - #{err}"} if err
-      res.send shelters
+      async.waterfall [
+        (next) -> shelters.find query, next
+        (results, next) -> results.toArray next
+        (shelters, next) -> addDistance shelters, {lat, long}, next
+      ], (err, shelters) ->
+        return res.send {error: "Database error - #{err}"} if err
+        res.send shelters

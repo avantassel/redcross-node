@@ -1,7 +1,8 @@
 { "mongo":
   { "host": "localhost"
   , "port": 27017
-  , "dbName": "RedCross"
+  , "dbName": "redcross"
+  , "uri": null
   }
 , "cronUpdateSchedule": "* 9 * * *"
 }

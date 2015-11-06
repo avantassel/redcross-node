@@ -22,7 +22,7 @@
   },
   "scripts": {
     "prepublish": "cake build",
-    "start": "forever node app.js",
+    "start": "node app.js",
     "test": "mocha --timeout 20000 --reporter spec test/*.js"
   },
   "engines": {

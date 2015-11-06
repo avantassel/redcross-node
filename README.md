@@ -5,6 +5,8 @@
 
 An API for RedCross shelters. This module downloads shelters and stores them in a mongo database.
 
+[![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy)
+
 ## Development
 ```
 # install node modules

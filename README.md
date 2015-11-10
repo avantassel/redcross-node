@@ -2,6 +2,8 @@
 
 [![NPM Version](http://img.shields.io/npm/v/redcross.svg)](https://www.npmjs.org/package/redcross)
 [![Build Status](https://travis-ci.org/avantassel/redcross-node.svg)](https://travis-ci.org/avantassel/redcross-node)
+[![Dependencies](https://david-dm.org/avantassel/redcross-node.svg)](https://david-dm.org/avantassel/redcross-node)&nbsp;
+
 
 An API for RedCross shelters. This module downloads shelters and stores them in a mongo database.
 

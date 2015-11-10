@@ -1,8 +1,8 @@
 ---
 applications:
 - name:    redcross
-  domain:  mybluemix.net
   host:    redcross
+  domain:  mybluemix.net
   memory:  512M
   command: node app.js
   timeout: 80

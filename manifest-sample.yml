@@ -8,3 +8,4 @@ applications:
   timeout: 80
   env:
     NODE_ENV: production
+    MONGO_URI: ""

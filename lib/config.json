@@ -1,8 +1,9 @@
-{ "mongo":
-  { "host": "localhost"
-  , "port": 27017
-  , "dbName": "redcross"
-  , "uri": null
-  }
-, "cronUpdateSchedule": "* 9 * * *"
+{
+  "mongo": {
+    "host": "localhost",
+    "port": 27017,
+    "dbName": "redcross",
+    "uri": null
+  },
+  "cronUpdateSchedule": "* 9 * * *"
 }

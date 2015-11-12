@@ -1,6 +1,6 @@
 # RedCross node
 
-[![NPM Version](http://img.shields.io/npm/v/redcross.svg)](https://www.npmjs.org/package/redcross)
+[![NPM version](https://badge.fury.io/js/redcross.svg)](https://npmjs.org/package/redcross)
 [![Build Status](https://travis-ci.org/avantassel/redcross-node.svg)](https://travis-ci.org/avantassel/redcross-node)
 [![Dependencies](https://david-dm.org/avantassel/redcross-node.svg)](https://david-dm.org/avantassel/redcross-node)&nbsp;
 

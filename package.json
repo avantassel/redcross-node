@@ -1,6 +1,6 @@
 {
   "name": "redcross",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "An API for RedCross shelters. This module downloads shelters and stores them in a mongo database.",
   "main": "app.js",
   "dependencies": {

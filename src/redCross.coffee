@@ -35,7 +35,9 @@ update = (collection, query, update, next) ->
     collection = db.collection collection
     collection.ensureIndex {location: '2dsphere'}, (err) ->
       options = {safe: true, upsert: true}
-      collection.update query, {'$set':update,'$setOnInsert':{created:new Date()}}, options, next
+      collection.update query, {'$set':update,'$setOnInsert':{created:new Date()}}, options, ->
+        db.close()
+        next
 
 saveAllShelters = (shelters, done) ->
   console.log "Updating #{shelters.length} shelters #{new Date()}"
@@ -48,7 +50,9 @@ deActivateShelters = (done) ->
   mongo.MongoClient.connect mongoURI, (err, db) ->
     collection = db.collection 'shelters'
     options = {safe: true}
-    collection.update {}, {'$set':{active:false}}, options, done()
+    collection.update {}, {'$set':{active:false}}, options, ->
+      db.close()
+      done()
 
 updateShelters = (done) ->
   sheltersCount = 0
@@ -112,6 +116,7 @@ module.exports =
         (next) -> shelters.find query, next
         (results, next) -> results.toArray next
       ], (err, shelters) ->
+        db.close()
         return res.send 'Database error' if err
         res.send shelters
 
@@ -130,5 +135,6 @@ module.exports =
         (results, next) -> results.toArray next
         (shelters, next) -> addDistance shelters, {lat, long}, next
       ], (err, shelters) ->
+        db.close()
         return res.send {error: "Database error - #{err}"} if err
         res.send shelters
